@@ -11,7 +11,7 @@
 
 (defn pid
   ([s]
-     (ref (assoc s :integrator 0 :derivator 0)))
+     (atom (assoc s :integrator 0 :derivator 0)))
   ([s v]
      (let [{:keys [set-point kp kd ki integrator derivator bounds]} @s
            [in-min in-max out-min out-max] bounds
@@ -24,7 +24,7 @@
            i-val (* integrator ki)
            pid (scale (clamp (+ p-val i-val d-val) -1.0 1.0)
                       -1.0 1.0 out-min out-max)]
-       (dosync (alter s assoc :integrator integrator :derivator error))
+       (swap! s (fn [p] (assoc p :integrator integrator :derivator error)))
        pid)))
 
 (defmacro defpid
@@ -35,7 +35,7 @@
        (pid spec# curr#))
      
      (defn ~(symbol (str name \!)) [sp#]
-       (dosync (alter spec# assoc :set-point sp#)))
+       (swap! spec# (fn [p#] (assoc p# :set-point sp#))))
 
      (defn ~(symbol (str name "-specs")) []
        spec#)))
